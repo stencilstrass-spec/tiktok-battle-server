@@ -14,46 +14,51 @@ app.get("/", (req, res) => {
 });
 
 io.on("connection", (socket) => {
-
   console.log("Overlay conectado");
 
   socket.on("connect-tiktok", async (username) => {
-
     console.log("Conectando ao TikTok:", username);
-
     const tiktok = new WebcastPushConnection(username);
 
     try {
-
       await tiktok.connect();
       console.log("Conectado à live");
 
       tiktok.on("gift", (data) => {
+        // Log completo para debug — remova depois de confirmar
+        console.log("RAW GIFT:", JSON.stringify(data, null, 2));
 
-        console.log("Gift recebido:", data.giftName);
+        const giftPic =
+          (typeof data.giftPictureUrl === 'string' && data.giftPictureUrl) ||
+          data.giftPictureUrl?.urlList?.[0] ||
+          data.gift?.picture?.urlList?.[0] ||
+          data.giftPicture?.urlList?.[0] ||
+          data.image?.urlList?.[0] ||
+          "";
 
-     io.emit("gift", {
-  uniqueId: data.uniqueId,
-  username: data.uniqueId,
-  giftName: data.giftName,
-  repeatCount: data.repeatCount,
-  giftPictureUrl: data.giftPictureUrl?.urlList?.[0] || ""
-});
+        const profilePic =
+          (typeof data.profilePictureUrl === 'string' && data.profilePictureUrl) ||
+          data.profilePictureUrl?.urlList?.[0] ||
+          data.userDetails?.profilePictureUrl ||
+          "";
 
+        io.emit("gift", {
+          uniqueId: data.uniqueId,
+          username: data.uniqueId,
+          profilePicture: profilePic,
+          giftName: data.giftName,
+          repeatCount: data.repeatCount,
+          giftPictureUrl: giftPic
+        });
       });
 
     } catch (err) {
-
       console.log("Erro:", err);
-
     }
-
   });
-
 });
 
 const PORT = process.env.PORT || 3000;
-
 server.listen(PORT, () => {
   console.log("🚀 Servidor rodando na porta", PORT);
 });
