@@ -1,51 +1,38 @@
 const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
 const { WebcastPushConnection } = require('tiktok-live-connector');
 
 const app = express();
-const server = http.createServer(app);
 
-const io = new Server(server, {
-  cors: { origin: "*" }
+app.get('/', (req, res) => {
+  res.send("Servidor TikTok Battle ativo");
 });
 
-let tiktokConnection = null;
+app.get('/connect/:username', async (req, res) => {
+  const { username } = req.params;
 
-io.on('connection', (socket) => {
-  console.log("Overlay conectado");
+  try {
+    const tiktok = new WebcastPushConnection(username);
+    const state = await tiktok.connect();
 
-  socket.on('connect-tiktok', (username) => {
+    console.log(`✅ Conectado à live de @${username}`);
 
-    if (tiktokConnection) {
-      tiktokConnection.disconnect();
-    }
-
-    tiktokConnection = new WebcastPushConnection(username);
-
-    tiktokConnection.connect()
-      .then(() => {
-        console.log("Conectado ao TikTok:", username);
-        socket.emit("tiktok-connected", username);
-      })
-      .catch(err => {
-        socket.emit("tiktok-error", err.message);
-      });
-
-    tiktokConnection.on('gift', data => {
-
-      io.emit("gift", {
-        username: data.uniqueId,
-        giftName: data.giftName,
-        diamondCount: data.diamondCount,
-        repeatCount: data.repeatCount,
-        profilePicture: data.profilePictureUrl
-      });
-
+    tiktok.on('gift', (data) => {
+      console.log(`🎁 Presente de @${data.uniqueId}: ${data.giftName} x${data.repeatCount}`);
     });
 
-  });
+    res.json({
+      success: true,
+      username: username,
+      roomId: state.roomId
+    });
 
+  } catch (err) {
+    console.error("Erro:", err);
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
+  }
 });
 
 const PORT = process.env.PORT || 3000;
