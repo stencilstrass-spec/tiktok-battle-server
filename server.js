@@ -5,9 +5,13 @@ const { WebcastPushConnection } = require("tiktok-live-connector");
 
 const app = express();
 const server = http.createServer(app);
+
 const io = new Server(server, {
   cors: { origin: "*" }
 });
+
+let tiktok = null;
+let connected = false;
 
 app.get("/", (req, res) => {
   res.send("Servidor TikTok Battle ativo");
@@ -19,35 +23,54 @@ io.on("connection", (socket) => {
 
   socket.on("connect-tiktok", async (username) => {
 
+    if (connected) {
+      console.log("TikTok já conectado");
+      return;
+    }
+
     console.log("Conectando ao TikTok:", username);
 
-    const tiktok = new WebcastPushConnection(username);
+    tiktok = new WebcastPushConnection(username);
 
     try {
 
       await tiktok.connect();
-      console.log("Conectado à live");
 
+      connected = true;
+
+      console.log("Conectado à live!");
+
+      // EVENTO DE GIFT
       tiktok.on("gift", (data) => {
 
-  // Ignora gifts que ainda estão sendo repetidos
-  if (data.giftType === 1 && !data.repeatEnd) {
-    return;
-  }
+        // IGNORA EVENTOS DE COMBO INTERMEDIÁRIOS
+        if (data.giftType === 1 && !data.repeatEnd) {
+          return;
+        }
 
-  console.log("Gift confirmado:", data.giftName);
+        console.log("Gift recebido:", data.giftName, "x", data.repeatCount);
 
-  io.emit("gift", {
-    uniqueId: data.uniqueId,
-    giftName: data.giftName,
-    repeatCount: data.repeatCount
-  });
+        io.emit("gift", {
+          uniqueId: data.uniqueId,
+          giftName: data.giftName,
+          repeatCount: data.repeatCount
+        });
 
-});
+      });
+
+      // QUANDO LIVE DESCONECTA
+      tiktok.on("disconnected", () => {
+
+        console.log("Live desconectada");
+
+        connected = false;
+        tiktok = null;
+
+      });
 
     } catch (err) {
 
-      console.log("Erro:", err);
+      console.log("Erro ao conectar:", err);
 
     }
 
