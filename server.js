@@ -30,15 +30,20 @@ io.on("connection", (socket) => {
 
       tiktok.on("gift", (data) => {
 
-        console.log("Gift recebido:", data.giftName);
+  // Ignora gifts que ainda estão sendo repetidos
+  if (data.giftType === 1 && !data.repeatEnd) {
+    return;
+  }
 
-        io.emit("gift", {
-          uniqueId: data.uniqueId,
-          giftName: data.giftName,
-          repeatCount: data.repeatCount
-        });
+  console.log("Gift confirmado:", data.giftName);
 
-      });
+  io.emit("gift", {
+    uniqueId: data.uniqueId,
+    giftName: data.giftName,
+    repeatCount: data.repeatCount
+  });
+
+});
 
     } catch (err) {
 
