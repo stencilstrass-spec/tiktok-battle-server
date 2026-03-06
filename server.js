@@ -35,10 +35,9 @@ io.on("connection", (socket) => {
      io.emit("gift", {
   uniqueId: data.uniqueId,
   username: data.uniqueId,
-  profilePicture: data.profilePictureUrl || '',
   giftName: data.giftName,
   repeatCount: data.repeatCount,
-  diamondCount: data.diamondCount || 1,
+  giftPictureUrl: data.giftPictureUrl?.urlList?.[0] || ""
 });
 
       });
