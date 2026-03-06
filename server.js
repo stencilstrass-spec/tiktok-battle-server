@@ -32,11 +32,12 @@ io.on("connection", (socket) => {
 
         console.log("Gift recebido:", data.giftName);
 
-        io.emit("gift", {
-          uniqueId: data.uniqueId,
-          giftName: data.giftName,
-          repeatCount: data.repeatCount
-        });
+     io.emit("gift", {
+  uniqueId: data.uniqueId,
+  giftName: data.giftName,
+  repeatCount: data.repeatCount,
+  giftPictureUrl: data.giftPictureUrl
+});
 
       });
 
