@@ -34,9 +34,11 @@ io.on("connection", (socket) => {
 
      io.emit("gift", {
   uniqueId: data.uniqueId,
+  username: data.uniqueId,
+  profilePicture: data.profilePictureUrl || '',
   giftName: data.giftName,
   repeatCount: data.repeatCount,
-  giftPictureUrl: data.giftPictureUrl
+  diamondCount: data.diamondCount || 1,
 });
 
       });
