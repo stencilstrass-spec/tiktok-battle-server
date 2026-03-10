@@ -57,7 +57,6 @@ io.on("connection", (socket) => {
 
       tiktok.on("gift", (data) => {
         if (data.giftType === 1 && !data.repeatEnd) return;
-
         console.log("🎁 Gift:", data.giftName, "de", data.uniqueId);
         io.emit("gift", {
           uniqueId: data.uniqueId,
@@ -85,6 +84,19 @@ io.on("connection", (socket) => {
       socket.emit("tiktok-error", err.message || "Erro ao conectar");
     }
   });
+
+  // DESCONECTAR TIKTOK POR SOLICITAÇÃO DO ADMIN
+  socket.on("disconnect-tiktok", () => {
+    console.log("🔌 Desconectando TikTok por solicitação do admin");
+    if (tiktok) {
+      tiktok.disconnect();
+      tiktok = null;
+    }
+    connected = false;
+    currentUsername = "";
+    io.emit("tiktok-error", "TikTok desconectado pelo admin");
+  });
+
 });
 
 const PORT = process.env.PORT || 3000;
