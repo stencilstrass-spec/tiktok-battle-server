@@ -24,19 +24,16 @@ app.get("/status", (req, res) => {
 io.on("connection", (socket) => {
   console.log("Overlay conectado");
 
-  // Se já conectado, avisa o novo client
   if (connected && currentUsername) {
     socket.emit("tiktok-connected", currentUsername);
   }
 
   socket.on("connect-tiktok", async (username) => {
-    // Se já conectado ao mesmo user, só confirma
     if (connected && currentUsername === username) {
       socket.emit("tiktok-connected", username);
       return;
     }
 
-    // Se conectado a outro, desconecta primeiro
     if (connected && tiktok) {
       tiktok.disconnect();
       tiktok = null;
@@ -51,8 +48,6 @@ io.on("connection", (socket) => {
       connected = true;
       currentUsername = username;
       console.log("✅ Conectado à live de", username);
-
-      // AVISA O FRONTEND QUE CONECTOU
       io.emit("tiktok-connected", username);
 
       tiktok.on("gift", (data) => {
@@ -80,12 +75,10 @@ io.on("connection", (socket) => {
       connected = false;
       currentUsername = "";
       tiktok = null;
-      // AVISA O FRONTEND DO ERRO
       socket.emit("tiktok-error", err.message || "Erro ao conectar");
     }
   });
 
-  // DESCONECTAR TIKTOK POR SOLICITAÇÃO DO ADMIN
   socket.on("disconnect-tiktok", () => {
     console.log("🔌 Desconectando TikTok por solicitação do admin");
     if (tiktok) {
@@ -95,6 +88,10 @@ io.on("connection", (socket) => {
     connected = false;
     currentUsername = "";
     io.emit("tiktok-error", "TikTok desconectado pelo admin");
+  });
+
+  socket.on("battle-sync", (data) => {
+    socket.broadcast.emit("battle-sync", data);
   });
 
 });
